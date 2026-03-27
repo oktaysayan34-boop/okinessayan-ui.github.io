@@ -201,10 +201,7 @@
       <button class="btn" id="captureBtn">📷 Kameradan Çek</button>
       <button class="btn warn" id="blackBtn">⬛ 1. OPP Siyah Ölç</button>
       <button class="btn warn" id="whiteBtn">⬜ 2. OPP Beyaz Ölç</button>
-      <button class="btn warn" id="substrateWhiteBtn" disabled>⬜ 3A. Beyaz Al</button>
-      <button class="btn warn" id="substrateKraftBtn" disabled>🟫 3B. Kraft Al</button>
-      <button class="btn secondary" id="useWhiteSubstrateBtn" disabled>⬜ Beyaz Zemin Kullan</button>
-      <button class="btn primary" id="useKraftSubstrateBtn" disabled>🟫 Kraft Zemin Kullan</button>
+      <button class="btn warn" id="substrateAutoBtn" disabled>📄 3. Zemin Referansı Al (Otomatik)</button>
       <button class="btn danger" id="measureBtn" disabled>🎯 4. Numune Ölç</button>
       <button class="btn danger" id="resetBtn">↺ Sıfırla</button>
       <button class="btn" id="saveBtn" disabled>💾 Kaydet</button>
@@ -213,7 +210,7 @@
     <input type="file" id="galleryInput" accept="image/*" hidden>
     <input type="file" id="captureInput" accept="image/*" capture="environment" hidden>
     <input type="file" id="backupImportInput" accept="application/json,.json" hidden>
-    <div class="status" id="substrateStatus" style="margin-top:12px">Alt zemin bekleniyor. OPP siyah ve OPP beyaz ölçümden sonra boş kağıt alanını kadraja getirip Beyaz Al veya Kraft Al yap.</div>
+    <div class="status" id="substrateStatus" style="margin-top:12px">Alt zemin bekleniyor. OPP siyah ve OPP beyaz ölçümden sonra boş kağıt alanını kadraja getirip Zemin Referansı Al yap. Yazılım zeminin beyaz mı kraft mı olduğunu otomatik algılar.</div>
     <div class="security-backup-grid">
       <button class="btn secondary" id="fullExportBtn">📤 Dışa Aktar / Yedek Al</button>
       <button class="btn primary" id="fullImportBtn">📥 İçe Aktar / Geri Yükle</button>
@@ -598,24 +595,39 @@ function getActiveSubstrateRef(){
 function substrateLabel(type){
   return type === 'white' ? 'Beyaz zemin' : 'Kraft zemin';
 }
+function detectSubstrateType(rgb){
+  const lab = rgbToLab(rgb);
+  const avg = (rgb[0] + rgb[1] + rgb[2]) / 3;
+  const spread = Math.max(rgb[0], rgb[1], rgb[2]) - Math.min(rgb[0], rgb[1], rgb[2]);
+  const yellowBias = lab[2];
+  const redBias = lab[1];
+  const isWhite = avg >= 200 && spread <= 42 && yellowBias < 22 && redBias < 18;
+  return {
+    type: isWhite ? 'white' : 'kraft',
+    avg,
+    spread,
+    lab
+  };
+}
 function applySubstrateReference(rgb){
   const ref = getActiveSubstrateRef();
   if(!ref) return rgb.slice();
   return [0,1,2].map(i => clamp((rgb[i] / Math.max(ref[i], 1)) * 255, 0, 255));
 }
 function updateSubstrateUI(){
-  const activeLabel = activeSubstrate === 'white' ? 'Beyaz zemin' : 'Kraft zemin';
   const activeRef = getActiveSubstrateRef();
-  $('substrateStatus').textContent = activeRef
-    ? `${activeLabel} aktif. Referans RGB: ${activeRef.map(v=>v.toFixed(0)).join(', ')}`
-    : `${activeLabel} aktif ama henüz alınmadı. Boş kağıt kısmını kadraja getirip ${activeSubstrate === 'white' ? 'Beyaz Al' : 'Kraft Al'} butonuna bas.`;
-  $('useWhiteSubstrateBtn').disabled = !substrateWhiteRef;
-  $('useKraftSubstrateBtn').disabled = !substrateKraftRef;
-  $('substrateWhiteBtn').disabled = !isCalibrated();
-  $('substrateKraftBtn').disabled = !isCalibrated();
+  const autoBtn = $('substrateAutoBtn');
+  if(autoBtn) autoBtn.disabled = !isCalibrated();
+  if(activeRef){
+    const activeLabel = substrateLabel(activeSubstrate);
+    const lab = rgbToLab(activeRef);
+    $('substrateStatus').textContent = `${activeLabel} otomatik algılandı. Referans RGB: ${activeRef.map(v=>v.toFixed(0)).join(', ')} • LAB: L ${lab[0].toFixed(1)} a ${lab[1].toFixed(1)} b ${lab[2].toFixed(1)}`;
+  }else if(isCalibrated()){
+    $('substrateStatus').textContent = 'Kalibrasyon hazır. Şimdi boş kağıt alanını kadraja getirip Zemin Referansı Al yap. Yazılım zeminin beyaz mı kraft mı olduğunu otomatik algılar.';
+  }else{
+    $('substrateStatus').textContent = 'Alt zemin bekleniyor. OPP siyah ve OPP beyaz ölçümden sonra boş kağıt alanını kadraja getirip Zemin Referansı Al yap. Yazılım zeminin beyaz mı kraft mı olduğunu otomatik algılar.';
+  }
   $('measureBtn').disabled = !(isCalibrated() && hasActiveSubstrateRef());
-  $('useWhiteSubstrateBtn').classList.toggle('pressed', activeSubstrate === 'white');
-  $('useKraftSubstrateBtn').classList.toggle('pressed', activeSubstrate === 'kraft');
 }
 
 function updateCalibUI(){
@@ -689,12 +701,11 @@ async function useImageFile(file){
   if(liveRaf) cancelAnimationFrame(liveRaf);
   liveLoop();
   $('zoomInfoText').textContent = 'Galeri / çekilen fotoğraf modunda akıllı ya da manuel dijital zoom kullanılabilir. ROI kutusunu taşıdıkça zoom o bölgeye odaklanır.';
-  setStatus('Görsel yüklendi. Önce OPP siyah ve OPP beyaz ölç, sonra zemin referansını alıp numuneyi ölç.');
+  setStatus('Görsel yüklendi. Önce OPP siyah ve OPP beyaz ölç, sonra boş kağıdı gösterip Zemin Referansı Al yap, sonra numuneyi ölç.');
 }
 
 function openCaptureDirect(){
   pulseButton('captureBtn');
-  if(isMobileBrowser()) setStatus('Telefonda kamera/çekim penceresi açılıyor... İzin isterse Onayla.');
   $('captureInput').click();
 }
 
@@ -875,7 +886,7 @@ function liveLoop(){
 }
 
 async function captureRef(type){
-  const buttonMap = {black:'blackBtn', white:'whiteBtn', substrateWhite:'substrateWhiteBtn', substrateKraft:'substrateKraftBtn'};
+  const buttonMap = {black:'blackBtn', white:'whiteBtn', substrateAuto:'substrateAutoBtn'};
   pulseButton(buttonMap[type] || 'blackBtn');
   if(!stream && !importedImageMode){ setStatus('Önce Kameradan Çek veya Galeriden Seç kullan.'); return; }
   const {med} = await collectSamples(14);
@@ -885,16 +896,14 @@ async function captureRef(type){
   }else if(type === 'white'){
     whiteRef = med;
     setStatus(`OPP beyaz ölçüldü: ${med.map(v=>v.toFixed(1)).join(', ')}`);
-  }else if(type === 'substrateWhite'){
+  }else if(type === 'substrateAuto'){
     if(!isCalibrated()){ setStatus('Önce OPP siyah ve OPP beyaz ölç.'); return; }
-    substrateWhiteRef = applyCalibration(med);
-    activeSubstrate = 'white';
-    setStatus(`Beyaz zemin referansı alındı: ${substrateWhiteRef.map(v=>v.toFixed(1)).join(', ')}`);
-  }else if(type === 'substrateKraft'){
-    if(!isCalibrated()){ setStatus('Önce OPP siyah ve OPP beyaz ölç.'); return; }
-    substrateKraftRef = applyCalibration(med);
-    activeSubstrate = 'kraft';
-    setStatus(`Kraft zemin referansı alındı: ${substrateKraftRef.map(v=>v.toFixed(1)).join(', ')}`);
+    const calibrated = applyCalibration(med);
+    const detected = detectSubstrateType(calibrated);
+    activeSubstrate = detected.type;
+    if(detected.type === 'white') substrateWhiteRef = calibrated;
+    else substrateKraftRef = calibrated;
+    setStatus(`${substrateLabel(detected.type)} otomatik algılandı. RGB: ${calibrated.map(v=>v.toFixed(1)).join(', ')} • LAB: L ${detected.lab[0].toFixed(1)} a ${detected.lab[1].toFixed(1)} b ${detected.lab[2].toFixed(1)}`);
   }
   updateCalibUI();
   updateSubstrateUI();
@@ -903,7 +912,7 @@ async function captureRef(type){
 async function measureTarget(){
   pulseButton('measureBtn');
   if(!isCalibrated()){ setStatus('Önce OPP siyah ve OPP beyaz ölç.'); return; }
-  if(!hasActiveSubstrateRef()){ setStatus('Önce aktif zeminin boş kağıt kısmını referans olarak al.'); return; }
+  if(!hasActiveSubstrateRef()){ setStatus('Önce boş kağıt kısmını gösterip Zemin Referansı Al yap.'); return; }
   const diff = (Math.abs(whiteRef[0]-blackRef[0])+Math.abs(whiteRef[1]-blackRef[1])+Math.abs(whiteRef[2]-blackRef[2]))/3;
   if(diff < 8){ setStatus('OPP siyah ve OPP beyaz çok benzer. Kalibrasyonu yeniden yap.'); return; }
 
@@ -1344,20 +1353,12 @@ async function handleAuthPrimary(){
     console.error(err);
   }
 }
-function isMobileBrowser(){
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
-}
-
 function unlockApp(statusMsg){
   appUnlocked = true;
   $('authOverlay').style.display = 'none';
   document.body.classList.remove('app-locked');
-  if(isMobileBrowser()){
-    setStatus(statusMsg || 'Yazılım açıldı. Telefonda kamera izni için Kameradan Çek butonuna bas.');
-  }else{
-    setStatus(statusMsg || 'Yazılım açıldı.');
-    robustStartCamera();
-  }
+  setStatus(statusMsg || 'Yazılım açıldı.');
+  robustStartCamera();
 }
 function initPasswordGate(){
   setAuthMode(localStorage.getItem(APP_PASSWORD_HASH_KEY) ? 'login' : 'setup');
@@ -1443,10 +1444,8 @@ $('galleryInput').addEventListener('change', e => { const f=e.target.files&&e.ta
 $('captureInput').addEventListener('change', e => { const f=e.target.files&&e.target.files[0]; useImageFile(f); e.target.value=''; });
 $('blackBtn').addEventListener('click', ()=>captureRef('black'));
 $('whiteBtn').addEventListener('click', ()=>captureRef('white'));
-$('substrateWhiteBtn').addEventListener('click', ()=>captureRef('substrateWhite'));
-$('substrateKraftBtn').addEventListener('click', ()=>captureRef('substrateKraft'));
-$('useWhiteSubstrateBtn').addEventListener('click', ()=>{ activeSubstrate = 'white'; pulseButton('useWhiteSubstrateBtn'); updateSubstrateUI(); setStatus('Aktif zemin beyaz olarak seçildi.'); });
-$('useKraftSubstrateBtn').addEventListener('click', ()=>{ activeSubstrate = 'kraft'; pulseButton('useKraftSubstrateBtn'); updateSubstrateUI(); setStatus('Aktif zemin kraft olarak seçildi.'); });
+$('substrateAutoBtn').addEventListener('click', ()=>captureRef('substrateAuto'));
+
 $('measureBtn').addEventListener('click', measureTarget);
 $('resetBtn').addEventListener('click', resetAll);
 $('saveBtn').addEventListener('click', saveMeasurement);
