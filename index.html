@@ -131,43 +131,13 @@
 
 </style>
 </head>
-<body class="app-locked">
-<div class="auth-overlay" id="authOverlay">
-  <div class="auth-card">
-    <div>
-      <h2 class="auth-title" id="authTitle">Yazılım Şifresi</h2>
-      <div class="auth-sub" id="authSub">İlk açılışta şifre belirle. Sonraki açılışlarda sadece bu şifre sorulur.</div>
-    </div>
-    <div class="auth-grid" id="authSetupFields">
-      <div class="auth-field">
-        <label for="setupPasswordInput">Yeni Şifre</label>
-        <input class="auth-input" id="setupPasswordInput" type="password" placeholder="Yeni şifre" autocomplete="new-password">
-      </div>
-      <div class="auth-field">
-        <label for="setupPasswordConfirmInput">Şifre Tekrar</label>
-        <input class="auth-input" id="setupPasswordConfirmInput" type="password" placeholder="Şifreyi tekrar yaz" autocomplete="new-password">
-      </div>
-    </div>
-    <div class="auth-grid hidden" id="authLoginFields">
-      <div class="auth-field">
-        <label for="loginPasswordInput">Şifre</label>
-        <input class="auth-input" id="loginPasswordInput" type="password" placeholder="Şifreni gir" autocomplete="current-password">
-      </div>
-    </div>
-    <div class="auth-error" id="authError"></div>
-    <div class="auth-actions">
-      <button class="btn primary" id="authPrimaryBtn">Şifreyi Kaydet ve Aç</button>
-    </div>
-    <div class="auth-note">Not: Bu koruma bu cihazdaki tarayıcı hafızasında saklanır. Güvenlik için ayrıca yedek almanı öneririm.</div>
-  </div>
-</div>
-
+<body>
 <div class="wrap">
   <div class="card">
     <div class="header">
       <div>
         <h1>LAB / CAM Web App</h1>
-        <div class="sub">Telefon için hazır web uygulaması. Kameradan çek veya galeriden seç. Dokunduğun noktadan ROI taşınır. Önce OPP siyah ve OPP beyaz ile kalibrasyon yapar, sonra beyaz veya kraft zemini baz alıp numuneyi ölçer.</div>
+        <div class="sub">Telefon için hazır web uygulaması. Kameradan çek veya galeriden seç. Dokunduğun noktadan ROI taşınır. Önce OPP siyah ve OPP beyaz ile kalibrasyon yapar, sonra zemin referansını otomatik algılayıp numuneyi ölçer.</div>
       </div>
       <div class="header-actions">
         <button class="top-action pantone" id="openPantoneDbBtn">Word Pantone DB</button>
@@ -199,12 +169,9 @@
     <div class="btn-grid">
       <button class="btn" id="pickGalleryBtn">🖼️ Galeriden Seç</button>
       <button class="btn" id="captureBtn">📷 Kameradan Çek</button>
-      <button class="btn warn" id="blackBtn">⬛ 1. OPP Siyah Ölç</button>
-      <button class="btn warn" id="whiteBtn">⬜ 2. OPP Beyaz Ölç</button>
-      <button class="btn warn" id="substrateWhiteBtn" disabled>⬜ 3A. Beyaz Al</button>
-      <button class="btn warn" id="substrateKraftBtn" disabled>🟫 3B. Kraft Al</button>
-      <button class="btn secondary" id="useWhiteSubstrateBtn" disabled>⬜ Beyaz Zemin Kullan</button>
-      <button class="btn primary" id="useKraftSubstrateBtn" disabled>🟫 Kraft Zemin Kullan</button>
+      <button class="btn warn" id="blackBtn">⬛ 1. Opaklık Siyah Ölç</button>
+      <button class="btn warn" id="whiteBtn">⬜ 2. Opaklık Beyaz Ölç</button>
+      <button class="btn warn" id="autoSubstrateBtn" disabled>🪄 3. Zemini Otomatik Algıla</button>
       <button class="btn danger" id="measureBtn" disabled>🎯 4. Numune Ölç</button>
       <button class="btn danger" id="resetBtn">↺ Sıfırla</button>
       <button class="btn" id="saveBtn" disabled>💾 Kaydet</button>
@@ -213,7 +180,7 @@
     <input type="file" id="galleryInput" accept="image/*" hidden>
     <input type="file" id="captureInput" accept="image/*" capture="environment" hidden>
     <input type="file" id="backupImportInput" accept="application/json,.json" hidden>
-    <div class="status" id="substrateStatus" style="margin-top:12px">Alt zemin bekleniyor. OPP siyah ve OPP beyaz ölçümden sonra boş kağıt alanını kadraja getirip Zemini Otomatik Algıla yap.</div>
+    <div class="status" id="substrateStatus" style="margin-top:12px">Zemin referansı bekleniyor. Önce opaklık siyah ve opaklık beyaz ölç, sonra boş kağıt alanını kadraja getirip Zemini Otomatik Algıla yap.</div>
     <div class="security-backup-grid">
       <button class="btn secondary" id="fullExportBtn">📤 Dışa Aktar / Yedek Al</button>
       <button class="btn primary" id="fullImportBtn">📥 İçe Aktar / Geri Yükle</button>
@@ -321,8 +288,8 @@
   <div class="card">
     <div class="status" id="status">Hazır. Kameradan Çek veya Galeriden Seç ile başla.</div>
     <div class="metrics" style="margin-top:10px">
-      <div class="metric"><div class="k">OPP Siyah</div><div class="v mono" id="blackVal">—</div></div>
-      <div class="metric"><div class="k">OPP Beyaz</div><div class="v mono" id="whiteVal">—</div></div>
+      <div class="metric"><div class="k">Opaklık Siyah</div><div class="v mono" id="blackVal">—</div></div>
+      <div class="metric"><div class="k">Opaklık Beyaz</div><div class="v mono" id="whiteVal">—</div></div>
       <div class="metric"><div class="k">Ref. Farkı</div><div class="v mono" id="diffVal">—</div></div>
       <div class="metric"><div class="k">Kalibrasyon</div><div class="v" id="calibVal">Bekliyor</div></div>
     </div>
@@ -344,16 +311,10 @@
       <div class="swatch" id="resultSwatch" style="position:static;width:40px;height:40px;border-radius:12px"></div>
     </div>
     <div class="metrics">
-      <div class="metric"><div class="k">Ham L</div><div class="v mono" id="labL">—</div></div>
-      <div class="metric"><div class="k">Ham a</div><div class="v mono" id="labA">—</div></div>
-      <div class="metric"><div class="k">Ham b</div><div class="v mono" id="labB">—</div></div>
+      <div class="metric"><div class="k">L</div><div class="v mono" id="labL">—</div></div>
+      <div class="metric"><div class="k">a</div><div class="v mono" id="labA">—</div></div>
+      <div class="metric"><div class="k">b</div><div class="v mono" id="labB">—</div></div>
       <div class="metric"><div class="k">CMYK</div><div class="v mono" id="resultCmyk">—</div></div>
-    </div>
-    <div class="metrics" style="margin-top:10px">
-      <div class="metric"><div class="k">Düzeltilmiş L</div><div class="v mono" id="corrLabL">—</div></div>
-      <div class="metric"><div class="k">Düzeltilmiş a</div><div class="v mono" id="corrLabA">—</div></div>
-      <div class="metric"><div class="k">Düzeltilmiş b</div><div class="v mono" id="corrLabB">—</div></div>
-      <div class="metric"><div class="k">Düzeltme</div><div class="v mono" id="corrModeText">Kapalı</div></div>
     </div>
     <div style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card2);">
       <div class="row" style="margin-bottom:8px">
@@ -372,38 +333,34 @@
     <div class="small" style="margin-top:10px" id="resultNote">—</div>
   </div>
 
+
   <div class="card">
-    <div class="row" style="margin-bottom:10px"><strong>Spektrofotometre Karşılaştırma ve Ortalama Düzeltme</strong></div>
-    <div class="small" style="margin-bottom:10px">Önce numuneyi kamera ile ölç. Sonra aynı numunenin spektro LAB değerini gir. Referansları 5-10 farklı renkte biriktirip ortalama düzeltmeyi açarsan sonraki tüm ölçümlerde düzeltilmiş LAB otomatik hesaplanır.</div>
-    <div class="pantone-form-grid">
-      <div class="pantone-field"><label>Kamera L</label><input class="db-input" id="camLInput" type="number" step="0.01" placeholder="Otomatik gelir" /></div>
-      <div class="pantone-field"><label>Kamera a</label><input class="db-input" id="camAInput" type="number" step="0.01" placeholder="Otomatik gelir" /></div>
-      <div class="pantone-field"><label>Kamera b</label><input class="db-input" id="camBInput" type="number" step="0.01" placeholder="Otomatik gelir" /></div>
-      <div class="pantone-field"><label>Spektro L</label><input class="db-input" id="specLInput" type="number" step="0.01" placeholder="0" /></div>
-      <div class="pantone-field"><label>Spektro a</label><input class="db-input" id="specAInput" type="number" step="0.01" placeholder="0" /></div>
-      <div class="pantone-field"><label>Spektro b</label><input class="db-input" id="specBInput" type="number" step="0.01" placeholder="0" /></div>
+    <div class="row" style="margin-bottom:10px"><strong>Spektrofotometre Karşılaştırma</strong></div>
+    <div class="small" style="margin-bottom:10px">Son ölçümü spektrofotometre LAB ile karşılaştır. Sistem kamera LAB ile spektro LAB farkını hesaplar, ΔL / Δa / Δb ofsetini çıkarır ve Düzeltmeyi Aktif Et dersen sonraki ölçümlerde tahmini doğru LAB verir.</div>
+    <div class="metrics">
+      <div class="metric"><div class="k">Kamera L</div><input class="db-input mono" id="cameraLabL" inputmode="decimal" placeholder="—"></div>
+      <div class="metric"><div class="k">Kamera a</div><input class="db-input mono" id="cameraLabA" inputmode="decimal" placeholder="—"></div>
+      <div class="metric"><div class="k">Kamera b</div><input class="db-input mono" id="cameraLabB" inputmode="decimal" placeholder="—"></div>
+      <div class="metric"><div class="k">Spektro L</div><input class="db-input mono" id="spectroLabL" inputmode="decimal" placeholder="ör. 55.74"></div>
+      <div class="metric"><div class="k">Spektro a</div><input class="db-input mono" id="spectroLabA" inputmode="decimal" placeholder="ör. 62.00"></div>
+      <div class="metric"><div class="k">Spektro b</div><input class="db-input mono" id="spectroLabB" inputmode="decimal" placeholder="ör. 34.06"></div>
     </div>
-    <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap">
+    <div class="row" style="margin-top:12px;gap:12px;flex-wrap:wrap">
       <button class="btn secondary" id="fillCameraLabBtn">Kamera LAB Doldur</button>
-      <button class="btn primary" id="compareSpectroBtn">Farkı Hesapla</button>
-      <button class="btn secondary" id="addSpectroReferenceBtn">Referans Ekle</button>
-      <button class="btn secondary" id="buildAverageCorrectionBtn">Ortalama Düzeltmeyi Oluştur</button>
-      <button class="btn danger" id="clearSpectroReferencesBtn">Referansları Temizle</button>
+      <button class="btn primary" id="compareSpectroBtn">Spektro ile Karşılaştır</button>
+      <button class="btn warn" id="activateCorrectionBtn">Düzeltmeyi Aktif Et</button>
+      <button class="btn danger" id="disableCorrectionBtn">Düzeltmeyi Kapat</button>
     </div>
-    <div class="metrics" style="margin-top:10px">
-      <div class="metric"><div class="k">ΔL</div><div class="v mono" id="specDeltaL">—</div></div>
-      <div class="metric"><div class="k">Δa</div><div class="v mono" id="specDeltaA">—</div></div>
-      <div class="metric"><div class="k">Δb</div><div class="v mono" id="specDeltaB">—</div></div>
-      <div class="metric"><div class="k">Bu Numune Doğru LAB</div><div class="v mono" id="specSuggestion">—</div></div>
+    <div class="metrics" style="margin-top:12px">
+      <div class="metric"><div class="k">ΔL</div><div class="v mono" id="deltaLVal">—</div></div>
+      <div class="metric"><div class="k">Δa</div><div class="v mono" id="deltaAVal">—</div></div>
+      <div class="metric"><div class="k">Δb</div><div class="v mono" id="deltaBVal">—</div></div>
+      <div class="metric"><div class="k">Düzeltme Durumu</div><div class="v" id="correctionStateVal">Kapalı</div></div>
+      <div class="metric"><div class="k">Uygulama Formülü</div><div class="v mono" id="correctionFormulaVal">—</div></div>
+      <div class="metric"><div class="k">Düzeltilmiş LAB</div><div class="v mono" id="correctedLabVal">—</div></div>
     </div>
-    <div class="metrics" style="margin-top:10px">
-      <div class="metric"><div class="k">Referans Sayısı</div><div class="v mono" id="specRefCount">0</div></div>
-      <div class="metric"><div class="k">Ortalama ΔL</div><div class="v mono" id="avgDeltaL">0.00</div></div>
-      <div class="metric"><div class="k">Ortalama Δa</div><div class="v mono" id="avgDeltaA">0.00</div></div>
-      <div class="metric"><div class="k">Ortalama Δb</div><div class="v mono" id="avgDeltaB">0.00</div></div>
-    </div>
-    <div class="small" style="margin-top:10px" id="specAverageNote">Henüz referans yok. 5-10 farklı renk ile daha doğru ortalama düzeltme oluşur.</div>
-    <div class="history" id="spectroReferenceList" style="margin-top:10px"></div>
+
+    <div class="small" style="margin-top:10px" id="correctionExplainVal">Formül: Ölçülen LAB + ofset = düzeltilmiş LAB</div>
   </div>
 
   <div class="card">
@@ -426,13 +383,9 @@ let importedImageBitmap = null;
 let currentDeviceId = null;
 let blackRef = null;
 let whiteRef = null;
-let substrateWhiteRef = null;
-let substrateKraftRef = null;
-let activeSubstrate = 'white';
+let substrateAutoRef = null;
+let activeSubstrate = 'unknown';
 let lastMeasurement = null;
-const SPECTRO_REFS_STORAGE_KEY = 'oktay_lab_spectro_refs_v1';
-const SPECTRO_CORRECTION_STORAGE_KEY = 'oktay_lab_spectro_correction_v1';
-let activeSpectroCorrection = loadSpectroCorrection();
 let liveRaf = null;
 let importedImageZoom = 1;
 const importedImageZoomMax = 10;
@@ -442,6 +395,83 @@ const roiSizeRatio = 0.18;
 const video = $('video');
 const canvas = $('canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+const SPECTRO_CORRECTION_STORAGE_KEY = 'oktay_spectro_lab_correction_v2';
+let spectroCorrection = {active:false,dL:0,da:0,db:0,updated_at:null};
+let pendingSpectroCorrection = null;
+
+function loadSpectroCorrection(){
+  try{
+    const raw = localStorage.getItem(SPECTRO_CORRECTION_STORAGE_KEY);
+    if(!raw){ spectroCorrection = {active:false,dL:0,da:0,db:0,updated_at:null}; return spectroCorrection; }
+    const data = JSON.parse(raw);
+    spectroCorrection = {
+      active: !!data.active,
+      dL: Number(data.dL)||0,
+      da: Number(data.da)||0,
+      db: Number(data.db)||0,
+      updated_at: data.updated_at || null
+    };
+  }catch(e){
+    spectroCorrection = {active:false,dL:0,da:0,db:0,updated_at:null};
+  }
+  return spectroCorrection;
+}
+function persistSpectroCorrection(){
+  localStorage.setItem(SPECTRO_CORRECTION_STORAGE_KEY, JSON.stringify(spectroCorrection));
+}
+function updateCorrectionUi(){
+  if($('deltaLVal')) $('deltaLVal').textContent = pendingSpectroCorrection ? pendingSpectroCorrection.dL.toFixed(2) : (spectroCorrection.active ? spectroCorrection.dL.toFixed(2) : '—');
+  if($('deltaAVal')) $('deltaAVal').textContent = pendingSpectroCorrection ? pendingSpectroCorrection.da.toFixed(2) : (spectroCorrection.active ? spectroCorrection.da.toFixed(2) : '—');
+  if($('deltaBVal')) $('deltaBVal').textContent = pendingSpectroCorrection ? pendingSpectroCorrection.db.toFixed(2) : (spectroCorrection.active ? spectroCorrection.db.toFixed(2) : '—');
+  if($('correctionStateVal')) $('correctionStateVal').textContent = spectroCorrection.active ? 'Aktif' : 'Kapalı';
+  const base = pendingSpectroCorrection || spectroCorrection;
+  if($('correctionFormulaVal')) $('correctionFormulaVal').textContent = `L ${base.dL >= 0 ? '+' : ''}${(Number(base.dL)||0).toFixed(2)} • a ${base.da >= 0 ? '+' : ''}${(Number(base.da)||0).toFixed(2)} • b ${base.db >= 0 ? '+' : ''}${(Number(base.db)||0).toFixed(2)}`;
+  if($('correctedLabVal')){
+    const src = lastMeasurement?.raw_target_lab || lastMeasurement?.target_lab;
+    if(src){
+      const out = spectroCorrection.active
+        ? [src[0] + spectroCorrection.dL, src[1] + spectroCorrection.da, src[2] + spectroCorrection.db]
+        : (pendingSpectroCorrection ? [src[0] + pendingSpectroCorrection.dL, src[1] + pendingSpectroCorrection.da, src[2] + pendingSpectroCorrection.db] : src);
+      $('correctedLabVal').textContent = `L ${out[0].toFixed(2)} | a ${out[1].toFixed(2)} | b ${out[2].toFixed(2)}`;
+    } else $('correctedLabVal').textContent = '—';
+  }
+  if($('correctionExplainVal')) $('correctionExplainVal').textContent = spectroCorrection.active
+    ? 'Spektro düzeltmesi aktif. Yeni ölçümlerde ham LAB üzerine otomatik uygulanır.'
+    : (pendingSpectroCorrection ? 'Fark hesaplandı. Düzeltmeyi Aktif Et ile sonraki ölçümlere uygula.' : 'Formül: Ölçülen LAB + ofset = düzeltilmiş LAB');
+}
+function fillCameraLabInputs(){
+  const src = lastMeasurement?.raw_target_lab || lastMeasurement?.target_lab;
+  if(!src){ setStatus('Önce numune ölç.'); return; }
+  $('cameraLabL').value = Number(src[0]).toFixed(2);
+  $('cameraLabA').value = Number(src[1]).toFixed(2);
+  $('cameraLabB').value = Number(src[2]).toFixed(2);
+  updateCorrectionUi();
+  setStatus('Kamera LAB alanları dolduruldu.');
+}
+function compareWithSpectro(){
+  const camL = Number($('cameraLabL').value), camA = Number($('cameraLabA').value), camB = Number($('cameraLabB').value);
+  const spL = Number($('spectroLabL').value), spA = Number($('spectroLabA').value), spB = Number($('spectroLabB').value);
+  if([camL,camA,camB,spL,spA,spB].some(v => Number.isNaN(v))){ setStatus('Kamera ve spektro LAB alanlarını doldur.'); return; }
+  pendingSpectroCorrection = {dL: spL-camL, da: spA-camA, db: spB-camB, updated_at: new Date().toISOString()};
+  if($('correctedLabVal')) $('correctedLabVal').textContent = `L ${(camL + pendingSpectroCorrection.dL).toFixed(2)} | a ${(camA + pendingSpectroCorrection.da).toFixed(2)} | b ${(camB + pendingSpectroCorrection.db).toFixed(2)}`;
+  updateCorrectionUi();
+  setStatus(`Spektro farkı hesaplandı. ΔL ${pendingSpectroCorrection.dL.toFixed(2)} / Δa ${pendingSpectroCorrection.da.toFixed(2)} / Δb ${pendingSpectroCorrection.db.toFixed(2)}`);
+}
+function activateSpectroCorrection(){
+  if(!pendingSpectroCorrection){ setStatus('Önce Spektro ile Karşılaştır yap.'); return; }
+  spectroCorrection = {active:true, ...pendingSpectroCorrection};
+  persistSpectroCorrection();
+  updateCorrectionUi();
+  setStatus('Spektro düzeltmesi aktif edildi. Yeni ölçümlerde otomatik uygulanacak.');
+}
+function disableSpectroCorrection(){
+  pendingSpectroCorrection = null;
+  spectroCorrection = {active:false,dL:0,da:0,db:0,updated_at:new Date().toISOString()};
+  persistSpectroCorrection();
+  updateCorrectionUi();
+  setStatus('Spektro düzeltmesi kapatıldı.');
+}
 
 function setStatus(msg){ $('status').textContent = msg; }
 function pulseButton(id, kind='ok'){
@@ -633,33 +663,45 @@ function applyCalibration(rgb){
 }
 function isCalibrated(){ return !!(blackRef && whiteRef); }
 function hasActiveSubstrateRef(){
-  return activeSubstrate === 'white' ? !!substrateWhiteRef : !!substrateKraftRef;
+  return !!substrateAutoRef;
 }
 function getActiveSubstrateRef(){
-  return activeSubstrate === 'white' ? substrateWhiteRef : substrateKraftRef;
+  return substrateAutoRef;
 }
 function substrateLabel(type){
-  return type === 'white' ? 'Beyaz zemin' : 'Kraft zemin';
+  if(type === 'white') return 'Beyaz zemin';
+  if(type === 'kraft') return 'Kraft zemin';
+  return 'Bilinmeyen zemin';
 }
+function detectSubstrateType(rgb){
+  const lab = rgbToLab(rgb);
+  const avg = (rgb[0] + rgb[1] + rgb[2]) / 3;
+  const spread = Math.max(rgb[0], rgb[1], rgb[2]) - Math.min(rgb[0], rgb[1], rgb[2]);
+  const whiteScore = (lab[0] >= 80 ? 2 : 0) + (Math.abs(lab[1]) <= 6 ? 1 : 0) + (lab[2] <= 20 ? 1 : 0) + (avg >= 205 ? 1 : 0) + (spread <= 26 ? 1 : 0);
+  const kraftScore = (lab[0] <= 78 ? 1 : 0) + (lab[1] >= -3 && lab[1] <= 18 ? 1 : 0) + (lab[2] >= 16 ? 2 : 0) + (avg <= 210 ? 1 : 0);
+  const type = whiteScore >= kraftScore ? 'white' : 'kraft';
+  return { type, lab, confidence: Math.abs(whiteScore - kraftScore) + 1 };
+}
+
+function detectSubstrateTypeFromCalibratedRgb(rgb){
+  return detectSubstrateType(rgb).type;
+}
+
 function applySubstrateReference(rgb){
   const ref = getActiveSubstrateRef();
   if(!ref) return rgb.slice();
   return [0,1,2].map(i => clamp((rgb[i] / Math.max(ref[i], 1)) * 255, 0, 255));
 }
 function updateSubstrateUI(){
-  const activeLabel = activeSubstrate === 'white' ? 'Beyaz zemin' : 'Kraft zemin';
+  const activeLabel = substrateLabel(activeSubstrate);
   const activeRef = getActiveSubstrateRef();
   $('substrateStatus').textContent = activeRef
-    ? `${activeLabel} aktif. Referans RGB: ${activeRef.map(v=>v.toFixed(0)).join(', ')}`
-    : `${activeLabel} aktif ama henüz alınmadı. Boş kağıt kısmını kadraja getirip ${activeSubstrate === 'white' ? 'Beyaz Al' : 'Kraft Al'} butonuna bas.`;
-  $('useWhiteSubstrateBtn').disabled = !substrateWhiteRef;
-  $('useKraftSubstrateBtn').disabled = !substrateKraftRef;
-  $('substrateWhiteBtn').disabled = !isCalibrated();
-  $('substrateKraftBtn').disabled = !isCalibrated();
+    ? `${activeLabel} otomatik algılandı. Referans RGB: ${activeRef.map(v=>v.toFixed(0)).join(', ')}`
+    : 'Zemin referansı bekleniyor. Boş kağıdı gösterip “Zemin Referansı Al (Otomatik)” yap.';
+  $('substrateAutoBtn').disabled = !isCalibrated();
   $('measureBtn').disabled = !(isCalibrated() && hasActiveSubstrateRef());
-  $('useWhiteSubstrateBtn').classList.toggle('pressed', activeSubstrate === 'white');
-  $('useKraftSubstrateBtn').classList.toggle('pressed', activeSubstrate === 'kraft');
 }
+
 
 function updateCalibUI(){
   $('blackVal').textContent = blackRef ? blackRef.map(v=>v.toFixed(0)).join(', ') : '—';
@@ -732,11 +774,12 @@ async function useImageFile(file){
   if(liveRaf) cancelAnimationFrame(liveRaf);
   liveLoop();
   $('zoomInfoText').textContent = 'Galeri / çekilen fotoğraf modunda akıllı ya da manuel dijital zoom kullanılabilir. ROI kutusunu taşıdıkça zoom o bölgeye odaklanır.';
-  setStatus('Görsel yüklendi. Önce OPP siyah ve OPP beyaz ölç, sonra zemin referansını alıp numuneyi ölç.');
+  setStatus('Görsel yüklendi. Önce opaklık siyah ve opaklık beyaz ölç, sonra zemini otomatik algılayıp numuneyi ölç.');
 }
 
 function openCaptureDirect(){
   pulseButton('captureBtn');
+  if(isMobileBrowser()) setStatus('Telefonda kamera/çekim penceresi açılıyor... İzin isterse Onayla.');
   $('captureInput').click();
 }
 
@@ -917,7 +960,7 @@ function liveLoop(){
 }
 
 async function captureRef(type){
-  const buttonMap = {black:'blackBtn', white:'whiteBtn', substrateWhite:'substrateWhiteBtn', substrateKraft:'substrateKraftBtn'};
+  const buttonMap = {black:'blackBtn', white:'whiteBtn', substrateAuto:'substrateAutoBtn'};
   pulseButton(buttonMap[type] || 'blackBtn');
   if(!stream && !importedImageMode){ setStatus('Önce Kameradan Çek veya Galeriden Seç kullan.'); return; }
   const {med} = await collectSamples(14);
@@ -927,16 +970,14 @@ async function captureRef(type){
   }else if(type === 'white'){
     whiteRef = med;
     setStatus(`OPP beyaz ölçüldü: ${med.map(v=>v.toFixed(1)).join(', ')}`);
-  }else if(type === 'substrateWhite'){
+  }else if(type === 'substrateAuto'){
     if(!isCalibrated()){ setStatus('Önce OPP siyah ve OPP beyaz ölç.'); return; }
-    substrateWhiteRef = applyCalibration(med);
-    activeSubstrate = 'white';
-    setStatus(`Beyaz zemin referansı alındı: ${substrateWhiteRef.map(v=>v.toFixed(1)).join(', ')}`);
-  }else if(type === 'substrateKraft'){
-    if(!isCalibrated()){ setStatus('Önce OPP siyah ve OPP beyaz ölç.'); return; }
-    substrateKraftRef = applyCalibration(med);
-    activeSubstrate = 'kraft';
-    setStatus(`Kraft zemin referansı alındı: ${substrateKraftRef.map(v=>v.toFixed(1)).join(', ')}`);
+    const calibrated = applyCalibration(med);
+    const detectedInfo = detectSubstrateType(calibrated);
+    const detected = detectedInfo.type;
+    activeSubstrate = detected;
+    substrateAutoRef = calibrated.slice();
+    setStatus(`${substrateLabel(detected)} otomatik algılandı: ${calibrated.map(v=>v.toFixed(1)).join(', ')} • Güven ${detectedInfo.confidence}`);
   }
   updateCalibUI();
   updateSubstrateUI();
@@ -944,16 +985,18 @@ async function captureRef(type){
 
 async function measureTarget(){
   pulseButton('measureBtn');
-  if(!isCalibrated()){ setStatus('Önce OPP siyah ve OPP beyaz ölç.'); return; }
-  if(!hasActiveSubstrateRef()){ setStatus('Önce aktif zeminin boş kağıt kısmını referans olarak al.'); return; }
+  if(!isCalibrated()){ setStatus('Önce opaklık siyah ve opaklık beyaz ölç.'); return; }
+  if(!hasActiveSubstrateRef()){ setStatus('Önce boş kağıt kısmını kadraja getirip Zemini Otomatik Algıla yap.'); return; }
   const diff = (Math.abs(whiteRef[0]-blackRef[0])+Math.abs(whiteRef[1]-blackRef[1])+Math.abs(whiteRef[2]-blackRef[2]))/3;
-  if(diff < 8){ setStatus('OPP siyah ve OPP beyaz çok benzer. Kalibrasyonu yeniden yap.'); return; }
+  if(diff < 8){ setStatus('Opaklık siyah ve opaklık beyaz çok benzer. Kalibrasyonu yeniden yap.'); return; }
 
   const {med,std} = await collectSamples(16);
   const cal = applyCalibration(med);
   const substrateAdjusted = applySubstrateReference(cal);
-  const lab = rgbToLab(substrateAdjusted);
-  const correctedLab = applySpectroCorrection(lab);
+  const rawLab = rgbToLab(substrateAdjusted);
+  const correctedLab = spectroCorrection.active
+    ? [rawLab[0] + spectroCorrection.dL, rawLab[1] + spectroCorrection.da, rawLab[2] + spectroCorrection.db]
+    : rawLab.slice();
   const cmyk = rgbToCmyk(substrateAdjusted[0], substrateAdjusted[1], substrateAdjusted[2]);
   const quality = Math.max(...std) > 8 ? 'Kararsız ölçüm' : 'Kararlı ölçüm';
 
@@ -963,29 +1006,35 @@ async function measureTarget(){
     substrate_rgb_calibrated: getActiveSubstrateRef(),
     target_rgb_calibrated:substrateAdjusted,
     target_rgb_before_substrate: cal,
-    target_lab:lab, corrected_target_lab:correctedLab, target_cmyk:cmyk,
+    raw_target_lab: rawLab,
+    target_lab: correctedLab,
+    target_cmyk:cmyk,
+    spectro_correction_active: spectroCorrection.active,
+    spectro_correction: {dL:spectroCorrection.dL, da:spectroCorrection.da, db:spectroCorrection.db},
     stability_std_rgb:std, note:quality, created_at:new Date().toISOString()
   };
 
-  updateMeasurementLabUi(lab, correctedLab);
+  $('labL').textContent = correctedLab[0].toFixed(2);
+  $('labA').textContent = correctedLab[1].toFixed(2);
+  $('labB').textContent = correctedLab[2].toFixed(2);
   $('resultCmyk').textContent = cmyk.join(' / ');
   $('qualityPill').textContent = quality;
   $('resultSwatch').style.background = `rgb(${Math.round(substrateAdjusted[0])},${Math.round(substrateAdjusted[1])},${Math.round(substrateAdjusted[2])})`;
-  $('resultNote').textContent = `${quality} • σ=${Math.max(...std).toFixed(1)} • Aktif zemin: ${substrateLabel(activeSubstrate)}`;
+  $('resultNote').textContent = `${quality} • σ=${Math.max(...std).toFixed(1)} • Aktif zemin: ${substrateLabel(activeSubstrate)} • Ham LAB: L ${rawLab[0].toFixed(2)} a ${rawLab[1].toFixed(2)} b ${rawLab[2].toFixed(2)} • Spektro düzeltme ${spectroCorrection.active ? 'aktif' : 'kapalı'}`;
   updateNearestPantoneForMeasurement();
   $('saveBtn').disabled = false;
   $('exportBtn').disabled = false;
-  setStatus(`Numune ölçüldü. ${substrateLabel(activeSubstrate)} baz alındı. LAB = L ${lab[0].toFixed(2)}  a ${lab[1].toFixed(2)}  b ${lab[2].toFixed(2)}`);
+  setStatus(`Numune ölçüldü. ${substrateLabel(activeSubstrate)} baz alındı. ${spectroCorrection.active ? 'Düzeltilmiş ' : ''}LAB = L ${correctedLab[0].toFixed(2)}  a ${correctedLab[1].toFixed(2)}  b ${correctedLab[2].toFixed(2)}`);
 }
 
 function resetAll(){
   pulseButton('resetBtn', 'warn');
-  blackRef = null; whiteRef = null; substrateWhiteRef = null; substrateKraftRef = null; activeSubstrate = 'white'; lastMeasurement = null;
-  updateMeasurementLabUi(null, null);
+  blackRef = null; whiteRef = null; substrateAutoRef = null; activeSubstrate = 'unknown'; lastMeasurement = null;
+  $('labL').textContent = $('labA').textContent = $('labB').textContent = '—';
   $('resultCmyk').textContent = '—'; $('qualityPill').textContent = '—';
   updateNearestPantoneForMeasurement();
   $('saveBtn').disabled = true; $('exportBtn').disabled = true;
-  updateCalibUI(); updateSubstrateUI(); setStatus('Sıfırlandı.');
+  updateCalibUI(); updateSubstrateUI(); updateCorrectionUi(); setStatus('Sıfırlandı.');
 }
 
 
@@ -1038,9 +1087,8 @@ function loadHistory(){
       <div style="margin-left:auto"></div>
       <button class="btn danger" style="padding:6px 10px;font-size:12px" onclick="confirmDeleteOne(${index})">Sil</button>
     </div>
-    <div class="mono">Ham: L ${r.target_lab[0].toFixed(2)}  a ${r.target_lab[1].toFixed(2)}  b ${r.target_lab[2].toFixed(2)}</div>
-    <div class="mono">Düzeltilmiş: ${Array.isArray(r.corrected_target_lab) ? ('L ' + r.corrected_target_lab[0].toFixed(2) + '  a ' + r.corrected_target_lab[1].toFixed(2) + '  b ' + r.corrected_target_lab[2].toFixed(2)) : '—'}</div>
-    <div class="small">CMYK: ${(r.target_cmyk||[]).join(' / ')} • ${r.note||''} • ${r.substrate_mode ? ('Zemin: ' + (r.substrate_mode === 'white' ? 'Beyaz' : 'Kraft')) : ''}</div>`;
+    <div class="mono">LAB ${r.target_lab[0].toFixed(2)}  a ${r.target_lab[1].toFixed(2)}  b ${r.target_lab[2].toFixed(2)}</div>
+    <div class="small">${r.raw_target_lab ? ('Ham LAB: L ' + r.raw_target_lab[0].toFixed(2) + ' a ' + r.raw_target_lab[1].toFixed(2) + ' b ' + r.raw_target_lab[2].toFixed(2) + ' • ') : ''}CMYK: ${(r.target_cmyk||[]).join(' / ')} • ${r.note||''} • ${r.substrate_mode ? ('Zemin: ' + (r.substrate_mode === 'white' ? 'Beyaz' : 'Kraft')) : ''} • ${r.spectro_correction_active ? 'Spektro düzeltme aktif' : 'Spektro düzeltme kapalı'}</div>`;
     box.appendChild(div);
   });
 }
@@ -1315,165 +1363,12 @@ function exportJson(){
 }
 
 
-
-function loadSpectroReferences(){
-  try{
-    const rows = JSON.parse(localStorage.getItem(SPECTRO_REFS_STORAGE_KEY) || '[]');
-    return Array.isArray(rows) ? rows : [];
-  }catch(e){ return []; }
-}
-function saveSpectroReferences(rows){
-  localStorage.setItem(SPECTRO_REFS_STORAGE_KEY, JSON.stringify(rows || []));
-  renderSpectroCorrectionUi();
-}
-function loadSpectroCorrection(){
-  try{
-    const value = JSON.parse(localStorage.getItem(SPECTRO_CORRECTION_STORAGE_KEY) || 'null');
-    if(value && Number.isFinite(value.dL) && Number.isFinite(value.dA) && Number.isFinite(value.dB)) return value;
-  }catch(e){}
-  return {enabled:false,dL:0,dA:0,dB:0,refs:0,created_at:null};
-}
-function saveSpectroCorrection(correction){
-  activeSpectroCorrection = correction || {enabled:false,dL:0,dA:0,dB:0,refs:0,created_at:null};
-  localStorage.setItem(SPECTRO_CORRECTION_STORAGE_KEY, JSON.stringify(activeSpectroCorrection));
-  renderSpectroCorrectionUi();
-  if(lastMeasurement?.target_lab){
-    const corrected = applySpectroCorrection(lastMeasurement.target_lab);
-    lastMeasurement.corrected_target_lab = corrected;
-    updateMeasurementLabUi(lastMeasurement.target_lab, corrected);
-  }
-}
-function applySpectroCorrection(lab){
-  if(!Array.isArray(lab) || lab.length < 3) return lab;
-  const c = activeSpectroCorrection || {enabled:false,dL:0,dA:0,dB:0};
-  if(!c.enabled) return lab.slice();
-  return [lab[0] + c.dL, lab[1] + c.dA, lab[2] + c.dB];
-}
-function updateMeasurementLabUi(rawLab, correctedLab){
-  if(Array.isArray(rawLab)){
-    $('labL').textContent = rawLab[0].toFixed(2);
-    $('labA').textContent = rawLab[1].toFixed(2);
-    $('labB').textContent = rawLab[2].toFixed(2);
-  }else{
-    $('labL').textContent = $('labA').textContent = $('labB').textContent = '—';
-  }
-  if(Array.isArray(correctedLab)){
-    $('corrLabL').textContent = correctedLab[0].toFixed(2);
-    $('corrLabA').textContent = correctedLab[1].toFixed(2);
-    $('corrLabB').textContent = correctedLab[2].toFixed(2);
-  }else{
-    $('corrLabL').textContent = $('corrLabA').textContent = $('corrLabB').textContent = '—';
-  }
-  $('corrModeText').textContent = activeSpectroCorrection?.enabled
-    ? `Açık (${Number(activeSpectroCorrection.refs || 0)} ref)`
-    : 'Kapalı';
-}
-function fillCameraLabInputs(){
-  if(!lastMeasurement?.target_lab){ setStatus('Önce numune ölç.'); return; }
-  $('camLInput').value = lastMeasurement.target_lab[0].toFixed(2);
-  $('camAInput').value = lastMeasurement.target_lab[1].toFixed(2);
-  $('camBInput').value = lastMeasurement.target_lab[2].toFixed(2);
-  setStatus('Kamera LAB alanları dolduruldu.');
-}
-function getSpectroComparisonData(){
-  const camL = Number($('camLInput').value), camA = Number($('camAInput').value), camB = Number($('camBInput').value);
-  const spL = Number($('specLInput').value), spA = Number($('specAInput').value), spB = Number($('specBInput').value);
-  if([camL,camA,camB,spL,spA,spB].some(v=>Number.isNaN(v))){
-    throw new Error('Kamera ve spektro LAB alanlarını doldur.');
-  }
-  const dL = spL - camL, dA = spA - camA, dB = spB - camB;
-  return {
-    cam:[camL,camA,camB],
-    spec:[spL,spA,spB],
-    dL,dA,dB,
-    suggestion:[camL+dL, camA+dA, camB+dB]
-  };
-}
-function compareWithSpectro(){
-  try{
-    if(!lastMeasurement?.target_lab && !$('camLInput').value){
-      setStatus('Önce numune ölç veya Kamera LAB Doldur yap.');
-      return null;
-    }
-    const data = getSpectroComparisonData();
-    $('specDeltaL').textContent = data.dL.toFixed(2);
-    $('specDeltaA').textContent = data.dA.toFixed(2);
-    $('specDeltaB').textContent = data.dB.toFixed(2);
-    $('specSuggestion').textContent = `L ${data.suggestion[0].toFixed(2)} | a ${data.suggestion[1].toFixed(2)} | b ${data.suggestion[2].toFixed(2)}`;
-    setStatus(`Spektro farkı hesaplandı. ΔL ${data.dL.toFixed(2)} / Δa ${data.dA.toFixed(2)} / Δb ${data.dB.toFixed(2)}`);
-    return data;
-  }catch(err){
-    setStatus(err?.message || String(err));
-    return null;
-  }
-}
-function addSpectroReference(){
-  pulseButton('addSpectroReferenceBtn');
-  const data = compareWithSpectro();
-  if(!data) return;
-  const refs = loadSpectroReferences();
-  refs.push({
-    camera_lab: data.cam,
-    spectro_lab: data.spec,
-    dL: data.dL,
-    dA: data.dA,
-    dB: data.dB,
-    created_at:new Date().toISOString()
-  });
-  saveSpectroReferences(refs);
-  setStatus(`Referans eklendi. Toplam ${refs.length} referans var.`);
-}
-function buildAverageSpectroCorrection(){
-  pulseButton('buildAverageCorrectionBtn');
-  const refs = loadSpectroReferences();
-  if(!refs.length){ setStatus('Önce en az 1 referans ekle.'); return; }
-  const avg = refs.reduce((acc,row)=>{
-    acc.dL += Number(row.dL)||0;
-    acc.dA += Number(row.dA)||0;
-    acc.dB += Number(row.dB)||0;
-    return acc;
-  }, {dL:0,dA:0,dB:0});
-  avg.dL /= refs.length;
-  avg.dA /= refs.length;
-  avg.dB /= refs.length;
-  saveSpectroCorrection({enabled:true,dL:avg.dL,dA:avg.dA,dB:avg.dB,refs:refs.length,created_at:new Date().toISOString()});
-  setStatus(`Ortalama düzeltme aktif. ΔL ${avg.dL.toFixed(2)} / Δa ${avg.dA.toFixed(2)} / Δb ${avg.dB.toFixed(2)}`);
-}
-function clearSpectroReferences(){
-  pulseButton('clearSpectroReferencesBtn','warn');
-  if(!confirm('Tüm spektro referansları silinsin mi?')) return;
-  localStorage.setItem(SPECTRO_REFS_STORAGE_KEY, JSON.stringify([]));
-  saveSpectroCorrection({enabled:false,dL:0,dA:0,dB:0,refs:0,created_at:null});
-  $('specDeltaL').textContent = $('specDeltaA').textContent = $('specDeltaB').textContent = '—';
-  $('specSuggestion').textContent = '—';
-  setStatus('Spektro referansları ve ortalama düzeltme temizlendi.');
-}
-function renderSpectroCorrectionUi(){
-  const refs = loadSpectroReferences();
-  const corr = activeSpectroCorrection || {enabled:false,dL:0,dA:0,dB:0,refs:0};
-  $('specRefCount').textContent = String(refs.length);
-  $('avgDeltaL').textContent = Number(corr.dL || 0).toFixed(2);
-  $('avgDeltaA').textContent = Number(corr.dA || 0).toFixed(2);
-  $('avgDeltaB').textContent = Number(corr.dB || 0).toFixed(2);
-  $('specAverageNote').textContent = refs.length
-    ? `${corr.enabled ? 'Ortalama düzeltme aktif.' : 'Referanslar hazır. "Ortalama Düzeltmeyi Oluştur" ile aç.'} ${refs.length < 5 ? '5-10 referans daha iyi sonuç verir.' : 'Referans sayısı iyi görünüyor.'}`
-    : 'Henüz referans yok. 5-10 farklı renk ile daha doğru ortalama düzeltme oluşur.';
-  const box = $('spectroReferenceList');
-  if(!box) return;
-  box.innerHTML = refs.length ? refs.slice().reverse().slice(0,8).map(r => {
-    const d = new Date(r.created_at);
-    return `<div class="item"><div class="small">${d.toLocaleString('tr-TR')}</div><div class="mono">Kamera: L ${r.camera_lab[0].toFixed(2)} a ${r.camera_lab[1].toFixed(2)} b ${r.camera_lab[2].toFixed(2)}</div><div class="mono">Spektro: L ${r.spectro_lab[0].toFixed(2)} a ${r.spectro_lab[1].toFixed(2)} b ${r.spectro_lab[2].toFixed(2)}</div><div class="mono">Fark: ΔL ${Number(r.dL).toFixed(2)} / Δa ${Number(r.dA).toFixed(2)} / Δb ${Number(r.dB).toFixed(2)}</div></div>`;
-  }).join('') : '<div class="small">Henüz spektro referansı yok.</div>';
-  updateMeasurementLabUi(lastMeasurement?.target_lab || null, lastMeasurement?.corrected_target_lab || lastMeasurement?.target_lab || null);
-}
-
 const APP_PASSWORD_HASH_KEY = 'oktay_lab_app_password_hash_v1';
 const APP_BACKUP_VERSION = '1.0';
 const APP_BACKUP_KEYS = [
   'oktay_lab_measurements_webapp',
   PANTONE_DB_STORAGE_KEY,
   CUSTOM_PANTONE_DB_STORAGE_KEY,
-  SPECTRO_REFS_STORAGE_KEY,
   SPECTRO_CORRECTION_STORAGE_KEY
 ];
 let appUnlocked = false;
@@ -1540,15 +1435,27 @@ async function handleAuthPrimary(){
     console.error(err);
   }
 }
+function isMobileBrowser(){
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+}
+
 function unlockApp(statusMsg){
   appUnlocked = true;
-  $('authOverlay').style.display = 'none';
+  const overlay = document.getElementById('authOverlay'); if(overlay) overlay.style.display = 'none';
   document.body.classList.remove('app-locked');
-  setStatus(statusMsg || 'Yazılım açıldı.');
-  robustStartCamera();
+  if(isMobileBrowser()){
+    setStatus(statusMsg || 'Yazılım açıldı. Telefonda kamera izni için Kameradan Çek butonuna bas.');
+  }else{
+    setStatus(statusMsg || 'Yazılım açıldı.');
+    robustStartCamera();
+  }
 }
 function initPasswordGate(){
-  setAuthMode(localStorage.getItem(APP_PASSWORD_HASH_KEY) ? 'login' : 'setup');
+  appUnlocked = true;
+  document.body.classList.remove('app-locked');
+  const overlay = document.getElementById('authOverlay');
+  if(overlay) overlay.style.display = 'none';
+  setStatus('Yazılım açıldı. Kameradan Çek ile başla.');
 }
 function buildFullBackupPayload(){
   const data = {};
@@ -1617,12 +1524,15 @@ async function initApp(){
   updateTapMarker();
   updateCalibUI();
   updateSubstrateUI();
+  loadSpectroCorrection();
+  updateCorrectionUi();
   loadHistory();
   updatePantoneDbUi();
-  renderSpectroCorrectionUi();
   togglePantoneEditor(false);
   updateZoomUi(1);
   setHeader('kilitli', false);
+  document.body.classList.add('app-locked');
+  $('authOverlay').style.display='flex';
   setStatus('Şifre ekranı hazır.');
   initPasswordGate();
 }
@@ -1632,10 +1542,7 @@ $('galleryInput').addEventListener('change', e => { const f=e.target.files&&e.ta
 $('captureInput').addEventListener('change', e => { const f=e.target.files&&e.target.files[0]; useImageFile(f); e.target.value=''; });
 $('blackBtn').addEventListener('click', ()=>captureRef('black'));
 $('whiteBtn').addEventListener('click', ()=>captureRef('white'));
-$('substrateWhiteBtn').addEventListener('click', ()=>captureRef('substrateWhite'));
-$('substrateKraftBtn').addEventListener('click', ()=>captureRef('substrateKraft'));
-$('useWhiteSubstrateBtn').addEventListener('click', ()=>{ activeSubstrate = 'white'; pulseButton('useWhiteSubstrateBtn'); updateSubstrateUI(); setStatus('Aktif zemin beyaz olarak seçildi.'); });
-$('useKraftSubstrateBtn').addEventListener('click', ()=>{ activeSubstrate = 'kraft'; pulseButton('useKraftSubstrateBtn'); updateSubstrateUI(); setStatus('Aktif zemin kraft olarak seçildi.'); });
+$('autoSubstrateBtn').addEventListener('click', ()=>captureRef('substrateAuto'));
 $('measureBtn').addEventListener('click', measureTarget);
 $('resetBtn').addEventListener('click', resetAll);
 $('saveBtn').addEventListener('click', saveMeasurement);
@@ -1653,6 +1560,10 @@ $('clearCustomPantoneBtn').addEventListener('click', clearAllCustomPantones);
   $(id).addEventListener('keydown', e => { if(e.key === 'Enter') addOrUpdateCustomPantone(); });
 });
 $('findPantoneBtn').addEventListener('click', ()=> { pulseButton('findPantoneBtn'); updateNearestPantoneForMeasurement(); });
+$('fillCameraLabBtn').addEventListener('click', ()=> { pulseButton('fillCameraLabBtn'); fillCameraLabInputs(); });
+$('compareSpectroBtn').addEventListener('click', ()=> { pulseButton('compareSpectroBtn'); compareWithSpectro(); });
+$('activateCorrectionBtn').addEventListener('click', ()=> { pulseButton('activateCorrectionBtn'); activateSpectroCorrection(); });
+$('disableCorrectionBtn').addEventListener('click', ()=> { pulseButton('disableCorrectionBtn','warn'); disableSpectroCorrection(); });
 $('togglePantoneEditorBtn').addEventListener('click', ()=> togglePantoneEditor());
 $('zoomRange').addEventListener('input', e => applyZoomValue(e.target.value));
 $('bestZoomBtn').addEventListener('click', ()=> { pulseButton('bestZoomBtn'); applyBestZoom(); });
@@ -1671,11 +1582,6 @@ $('backupImportBtn')?.addEventListener('click', triggerFullBackupImport);
 $('fullExportBtn')?.addEventListener('click', exportFullBackup);
 $('fullImportBtn')?.addEventListener('click', triggerFullBackupImport);
 $('backupImportInput')?.addEventListener('change', maybeOpenBackupFile);
-$('fillCameraLabBtn')?.addEventListener('click', fillCameraLabInputs);
-$('compareSpectroBtn')?.addEventListener('click', compareWithSpectro);
-$('addSpectroReferenceBtn')?.addEventListener('click', addSpectroReference);
-$('buildAverageCorrectionBtn')?.addEventListener('click', buildAverageSpectroCorrection);
-$('clearSpectroReferencesBtn')?.addEventListener('click', clearSpectroReferences);
 $('authPrimaryBtn')?.addEventListener('click', handleAuthPrimary);
 $('setupPasswordInput')?.addEventListener('keydown', handleAuthEnter);
 $('setupPasswordConfirmInput')?.addEventListener('keydown', handleAuthEnter);
