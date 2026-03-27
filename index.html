@@ -167,7 +167,7 @@
     <div class="header">
       <div>
         <h1>LAB / CAM Web App</h1>
-        <div class="sub">Telefon için hazır web uygulaması. Kameradan çek veya galeriden seç. Dokunduğun noktadan ROI taşınır. Önce OPP siyah ve OPP beyaz ile kalibrasyon yapar, sonra zemini otomatik algılayıp numuneyi ölçer. Mobilde daha stabil ölçüm için ek kamera kararlılık ayarları uygular.</div>
+        <div class="sub">Telefon için hazır web uygulaması. Kameradan çek veya galeriden seç. Dokunduğun noktadan ROI taşınır. Önce OPP siyah ve OPP beyaz ile kalibrasyon yapar, sonra beyaz veya kraft zemini baz alıp numuneyi ölçer.</div>
       </div>
       <div class="header-actions">
         <button class="top-action pantone" id="openPantoneDbBtn">Word Pantone DB</button>
@@ -201,7 +201,10 @@
       <button class="btn" id="captureBtn">📷 Kameradan Çek</button>
       <button class="btn warn" id="blackBtn">⬛ 1. OPP Siyah Ölç</button>
       <button class="btn warn" id="whiteBtn">⬜ 2. OPP Beyaz Ölç</button>
-      <button class="btn warn" id="substrateAutoBtn" disabled>📄 3. Zemin Referansı Al (Otomatik)</button>
+      <button class="btn warn" id="substrateWhiteBtn" disabled>⬜ 3A. Beyaz Al</button>
+      <button class="btn warn" id="substrateKraftBtn" disabled>🟫 3B. Kraft Al</button>
+      <button class="btn secondary" id="useWhiteSubstrateBtn" disabled>⬜ Beyaz Zemin Kullan</button>
+      <button class="btn primary" id="useKraftSubstrateBtn" disabled>🟫 Kraft Zemin Kullan</button>
       <button class="btn danger" id="measureBtn" disabled>🎯 4. Numune Ölç</button>
       <button class="btn danger" id="resetBtn">↺ Sıfırla</button>
       <button class="btn" id="saveBtn" disabled>💾 Kaydet</button>
@@ -210,7 +213,7 @@
     <input type="file" id="galleryInput" accept="image/*" hidden>
     <input type="file" id="captureInput" accept="image/*" capture="environment" hidden>
     <input type="file" id="backupImportInput" accept="application/json,.json" hidden>
-    <div class="status" id="substrateStatus" style="margin-top:12px">Alt zemin bekleniyor. OPP siyah ve OPP beyaz ölçümden sonra boş kağıt alanını kadraja getirip Zemin Referansı Al yap. Yazılım zeminin beyaz mı kraft mı olduğunu otomatik algılar.</div>
+    <div class="status" id="substrateStatus" style="margin-top:12px">Alt zemin bekleniyor. OPP siyah ve OPP beyaz ölçümden sonra boş kağıt alanını kadraja getirip Beyaz Al veya Kraft Al yap.</div>
     <div class="security-backup-grid">
       <button class="btn secondary" id="fullExportBtn">📤 Dışa Aktar / Yedek Al</button>
       <button class="btn primary" id="fullImportBtn">📥 İçe Aktar / Geri Yükle</button>
@@ -227,7 +230,7 @@
         <button class="btn" id="resetZoomBtn">↺ Zoom Sıfırla</button>
         <button class="btn primary" id="macroToggleBtn">🌼 Makro Yakın Netleme: Aç</button>
       </div>
-      <div class="zoom-note" id="zoomInfoText">Kamera açıldığında cihazın izin verdiği en iyi gerçek zoom uygulanır. Galeriden seçilen fotoğrafta akıllı veya manuel dijital zoom kullanılabilir. Makro mod yakın yüzeylerde sürekli netlemeyi zorlar. Mobilde daha stabil ölçüm için kamera açıldığında ek netlik ve kararlılık ayarları uygulanır.</div>
+      <div class="zoom-note" id="zoomInfoText">Kamera açıldığında cihazın izin verdiği en iyi gerçek zoom uygulanır. Galeriden seçilen fotoğrafta akıllı veya manuel dijital zoom kullanılabilir. Makro mod yakın yüzeylerde sürekli netlemeyi zorlar.</div>
     </div>
   </div>
 
@@ -530,27 +533,6 @@ function roiRect(sourceW, sourceH){
   };
 }
 
-function sleep(ms){ return new Promise(resolve=>setTimeout(resolve, ms)); }
-
-function sampleDistance(a,b){
-  if(!a || !b) return Infinity;
-  return Math.abs(a[0]-b[0]) + Math.abs(a[1]-b[1]) + Math.abs(a[2]-b[2]);
-}
-
-function buildStableSampleSet(samples){
-  if(!samples || samples.length < 5) return samples || [];
-  const channels = [0,1,2].map(ch => samples.map(v=>v[ch]).sort((a,b)=>a-b));
-  const med = channels.map(a => a[Math.floor(a.length/2)]);
-  let filtered = samples.filter(v => sampleDistance(v, med) <= 30);
-  if(filtered.length < Math.max(5, Math.floor(samples.length * 0.45))){
-    filtered = samples
-      .slice()
-      .sort((a,b)=>sampleDistance(a, med)-sampleDistance(b, med))
-      .slice(0, Math.max(5, Math.floor(samples.length * 0.65)));
-  }
-  return filtered;
-}
-
 function sampleFromCurrentFrame(){
   let sw=0, sh=0;
   if(importedImageMode){
@@ -576,25 +558,23 @@ function sampleFromCurrentFrame(){
 }
 
 function collectSamples(n=12){
-  return new Promise(async (resolve,reject)=>{
+  return new Promise((resolve,reject)=>{
     const samples=[];
     let count=0;
-    if(stream && !importedImageMode) await sleep(180);
     function tick(){
       const s = sampleFromCurrentFrame();
       if(s) samples.push(s);
       count++;
-      if(count<n) setTimeout(tick, 45);
+      if(count<n) setTimeout(tick, 35);
       else{
         if(!samples.length) return reject(new Error('Örnek alınamadı'));
-        const stableSamples = buildStableSampleSet(samples);
-        const channels=[0,1,2].map(ch=>stableSamples.map(v=>v[ch]).sort((a,b)=>a-b));
+        const channels=[0,1,2].map(ch=>samples.map(v=>v[ch]).sort((a,b)=>a-b));
         const med = channels.map(a=>a[Math.floor(a.length/2)]);
         const std = channels.map(a=>{
           const mean = a.reduce((x,y)=>x+y,0)/a.length;
           return Math.sqrt(a.reduce((x,y)=>x+((y-mean)**2),0)/a.length);
         });
-        resolve({med,std,rawCount:samples.length,stableCount:stableSamples.length});
+        resolve({med,std});
       }
     }
     tick();
@@ -618,39 +598,24 @@ function getActiveSubstrateRef(){
 function substrateLabel(type){
   return type === 'white' ? 'Beyaz zemin' : 'Kraft zemin';
 }
-function detectSubstrateType(rgb){
-  const lab = rgbToLab(rgb);
-  const avg = (rgb[0] + rgb[1] + rgb[2]) / 3;
-  const spread = Math.max(rgb[0], rgb[1], rgb[2]) - Math.min(rgb[0], rgb[1], rgb[2]);
-  const yellowBias = lab[2];
-  const redBias = lab[1];
-  const isWhite = avg >= 200 && spread <= 42 && yellowBias < 22 && redBias < 18;
-  return {
-    type: isWhite ? 'white' : 'kraft',
-    avg,
-    spread,
-    lab
-  };
-}
 function applySubstrateReference(rgb){
   const ref = getActiveSubstrateRef();
   if(!ref) return rgb.slice();
   return [0,1,2].map(i => clamp((rgb[i] / Math.max(ref[i], 1)) * 255, 0, 255));
 }
 function updateSubstrateUI(){
+  const activeLabel = activeSubstrate === 'white' ? 'Beyaz zemin' : 'Kraft zemin';
   const activeRef = getActiveSubstrateRef();
-  const autoBtn = $('substrateAutoBtn');
-  if(autoBtn) autoBtn.disabled = !isCalibrated();
-  if(activeRef){
-    const activeLabel = substrateLabel(activeSubstrate);
-    const lab = rgbToLab(activeRef);
-    $('substrateStatus').textContent = `${activeLabel} otomatik algılandı. Referans RGB: ${activeRef.map(v=>v.toFixed(0)).join(', ')} • LAB: L ${lab[0].toFixed(1)} a ${lab[1].toFixed(1)} b ${lab[2].toFixed(1)}`;
-  }else if(isCalibrated()){
-    $('substrateStatus').textContent = 'Kalibrasyon hazır. Şimdi boş kağıt alanını kadraja getirip Zemin Referansı Al yap. Yazılım zeminin beyaz mı kraft mı olduğunu otomatik algılar.';
-  }else{
-    $('substrateStatus').textContent = 'Alt zemin bekleniyor. OPP siyah ve OPP beyaz ölçümden sonra boş kağıt alanını kadraja getirip Zemin Referansı Al yap. Yazılım zeminin beyaz mı kraft mı olduğunu otomatik algılar.';
-  }
+  $('substrateStatus').textContent = activeRef
+    ? `${activeLabel} aktif. Referans RGB: ${activeRef.map(v=>v.toFixed(0)).join(', ')}`
+    : `${activeLabel} aktif ama henüz alınmadı. Boş kağıt kısmını kadraja getirip ${activeSubstrate === 'white' ? 'Beyaz Al' : 'Kraft Al'} butonuna bas.`;
+  $('useWhiteSubstrateBtn').disabled = !substrateWhiteRef;
+  $('useKraftSubstrateBtn').disabled = !substrateKraftRef;
+  $('substrateWhiteBtn').disabled = !isCalibrated();
+  $('substrateKraftBtn').disabled = !isCalibrated();
   $('measureBtn').disabled = !(isCalibrated() && hasActiveSubstrateRef());
+  $('useWhiteSubstrateBtn').classList.toggle('pressed', activeSubstrate === 'white');
+  $('useKraftSubstrateBtn').classList.toggle('pressed', activeSubstrate === 'kraft');
 }
 
 function updateCalibUI(){
@@ -724,11 +689,12 @@ async function useImageFile(file){
   if(liveRaf) cancelAnimationFrame(liveRaf);
   liveLoop();
   $('zoomInfoText').textContent = 'Galeri / çekilen fotoğraf modunda akıllı ya da manuel dijital zoom kullanılabilir. ROI kutusunu taşıdıkça zoom o bölgeye odaklanır.';
-  setStatus('Görsel yüklendi. Önce OPP siyah ve OPP beyaz ölç, sonra boş kağıdı gösterip Zemin Referansı Al yap, sonra numuneyi ölç.');
+  setStatus('Görsel yüklendi. Önce OPP siyah ve OPP beyaz ölç, sonra zemin referansını alıp numuneyi ölç.');
 }
 
 function openCaptureDirect(){
   pulseButton('captureBtn');
+  if(isMobileBrowser()) setStatus('Telefonda kamera/çekim penceresi açılıyor... İzin isterse Onayla.');
   $('captureInput').click();
 }
 
@@ -811,28 +777,6 @@ async function focusAtPoint(nx, ny){
   }catch(e){}
 }
 
-async function applyCameraStabilitySettings(){
-  if(!cameraTrack || !cameraTrack.applyConstraints) return;
-  const cap = cameraTrack.getCapabilities?.() || {};
-  const advanced = [];
-  if(Array.isArray(cap.focusMode)){
-    if(cap.focusMode.includes('continuous')) advanced.push({focusMode:'continuous'});
-    else if(cap.focusMode.includes('single-shot')) advanced.push({focusMode:'single-shot'});
-  }
-  if(Array.isArray(cap.exposureMode)){
-    if(cap.exposureMode.includes('continuous')) advanced.push({exposureMode:'continuous'});
-  }
-  if(Array.isArray(cap.whiteBalanceMode)){
-    if(cap.whiteBalanceMode.includes('continuous')) advanced.push({whiteBalanceMode:'continuous'});
-  }
-  if(cap.frameRate && Number.isFinite(cap.frameRate.max)){
-    advanced.push({frameRate: Math.min(30, Number(cap.frameRate.max || 30))});
-  }
-  try{
-    if(advanced.length) await cameraTrack.applyConstraints({advanced});
-  }catch(e){}
-}
-
 async function setupCameraEnhancements(){
   cameraTrack = stream?.getVideoTracks?.()[0] || null;
   cameraCapabilities = cameraTrack?.getCapabilities?.() || null;
@@ -850,10 +794,9 @@ async function setupCameraEnhancements(){
     range.min = '1'; range.max = '1'; range.step = '0.1'; range.value = '1';
     updateZoomUi(1);
   }
-  await applyCameraStabilitySettings();
   await applyMacroMode(true);
   const macroText = macroModeEnabled ? 'Makro yakın netleme aktif.' : 'Makro yakın netleme kapalı.';
-  $('zoomInfoText').textContent = cameraCapabilities?.zoom ? `Kamera açıldı. ${macroText} Mobil kararlılık ayarları uygulandı. Cihaz zoom destekliyorsa en yüksek gerçek zoom kullanılır.` : `Kamera açıldı. ${macroText} Mobil kararlılık ayarları uygulandı. Bu cihaz/tarayıcı zoom API vermiyorsa 1.0x kullanılır.`;
+  $('zoomInfoText').textContent = cameraCapabilities?.zoom ? `Kamera açıldı. ${macroText} Cihaz zoom destekliyorsa en yüksek gerçek zoom kullanılır.` : `Kamera açıldı. ${macroText} Bu cihaz/tarayıcı zoom API vermiyorsa 1.0x kullanılır.`;
 }
 
 async function enumerateCameras(){
@@ -899,16 +842,16 @@ async function robustStartCamera(){
     await enumerateCameras();
 
     const lists = [];
-    if(currentDeviceId) lists.push({video:{deviceId:{exact:currentDeviceId}, facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080}, frameRate:{ideal:30,max:30}}, audio:false});
+    if(currentDeviceId) lists.push({video:{deviceId:{exact:currentDeviceId}, width:{ideal:1280}, height:{ideal:720}}, audio:false});
     const rear = cameras.find(c=>/back|rear|environment|arka|wide/i.test(c.label||''));
-    if(rear) lists.push({video:{deviceId:{exact:rear.deviceId}, width:{ideal:1920}, height:{ideal:1080}, frameRate:{ideal:30,max:30}}, audio:false});
-    lists.push({video:{facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080}, frameRate:{ideal:30,max:30}}, audio:false});
-    lists.push({video:{facingMode:'environment', width:{ideal:1280}, height:{ideal:720}, frameRate:{ideal:30,max:30}}, audio:false});
+    if(rear) lists.push({video:{deviceId:{exact:rear.deviceId}, width:{ideal:1280}, height:{ideal:720}}, audio:false});
+    lists.push({video:{facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:720}}, audio:false});
+    lists.push({video:{facingMode:'environment'}, audio:false});
     lists.push({video:true, audio:false});
 
     await tryOpenCamera(lists);
     await setupCameraEnhancements();
-    setStatus('Kamera açıldı. Mobil için daha stabil ölçüm ayarları uygulandı.');
+    setStatus('Kamera açıldı.');
   }catch(err){
     showNoGrant(true);
     setHeader('hata', false);
@@ -932,24 +875,26 @@ function liveLoop(){
 }
 
 async function captureRef(type){
-  const buttonMap = {black:'blackBtn', white:'whiteBtn', substrateAuto:'substrateAutoBtn'};
+  const buttonMap = {black:'blackBtn', white:'whiteBtn', substrateWhite:'substrateWhiteBtn', substrateKraft:'substrateKraftBtn'};
   pulseButton(buttonMap[type] || 'blackBtn');
   if(!stream && !importedImageMode){ setStatus('Önce Kameradan Çek veya Galeriden Seç kullan.'); return; }
-  const {med,stableCount,rawCount} = await collectSamples(18);
+  const {med} = await collectSamples(14);
   if(type === 'black'){
     blackRef = med;
-    setStatus(`OPP siyah ölçüldü: ${med.map(v=>v.toFixed(1)).join(', ')} • stabil kare ${stableCount}/${rawCount}`);
+    setStatus(`OPP siyah ölçüldü: ${med.map(v=>v.toFixed(1)).join(', ')}`);
   }else if(type === 'white'){
     whiteRef = med;
-    setStatus(`OPP beyaz ölçüldü: ${med.map(v=>v.toFixed(1)).join(', ')} • stabil kare ${stableCount}/${rawCount}`);
-  }else if(type === 'substrateAuto'){
+    setStatus(`OPP beyaz ölçüldü: ${med.map(v=>v.toFixed(1)).join(', ')}`);
+  }else if(type === 'substrateWhite'){
     if(!isCalibrated()){ setStatus('Önce OPP siyah ve OPP beyaz ölç.'); return; }
-    const calibrated = applyCalibration(med);
-    const detected = detectSubstrateType(calibrated);
-    activeSubstrate = detected.type;
-    if(detected.type === 'white') substrateWhiteRef = calibrated;
-    else substrateKraftRef = calibrated;
-    setStatus(`${substrateLabel(detected.type)} otomatik algılandı. RGB: ${calibrated.map(v=>v.toFixed(1)).join(', ')} • LAB: L ${detected.lab[0].toFixed(1)} a ${detected.lab[1].toFixed(1)} b ${detected.lab[2].toFixed(1)} • stabil kare ${stableCount}/${rawCount}`);
+    substrateWhiteRef = applyCalibration(med);
+    activeSubstrate = 'white';
+    setStatus(`Beyaz zemin referansı alındı: ${substrateWhiteRef.map(v=>v.toFixed(1)).join(', ')}`);
+  }else if(type === 'substrateKraft'){
+    if(!isCalibrated()){ setStatus('Önce OPP siyah ve OPP beyaz ölç.'); return; }
+    substrateKraftRef = applyCalibration(med);
+    activeSubstrate = 'kraft';
+    setStatus(`Kraft zemin referansı alındı: ${substrateKraftRef.map(v=>v.toFixed(1)).join(', ')}`);
   }
   updateCalibUI();
   updateSubstrateUI();
@@ -958,17 +903,16 @@ async function captureRef(type){
 async function measureTarget(){
   pulseButton('measureBtn');
   if(!isCalibrated()){ setStatus('Önce OPP siyah ve OPP beyaz ölç.'); return; }
-  if(!hasActiveSubstrateRef()){ setStatus('Önce boş kağıt kısmını gösterip Zemin Referansı Al yap.'); return; }
+  if(!hasActiveSubstrateRef()){ setStatus('Önce aktif zeminin boş kağıt kısmını referans olarak al.'); return; }
   const diff = (Math.abs(whiteRef[0]-blackRef[0])+Math.abs(whiteRef[1]-blackRef[1])+Math.abs(whiteRef[2]-blackRef[2]))/3;
   if(diff < 8){ setStatus('OPP siyah ve OPP beyaz çok benzer. Kalibrasyonu yeniden yap.'); return; }
 
-  const {med,std,stableCount,rawCount} = await collectSamples(22);
+  const {med,std} = await collectSamples(16);
   const cal = applyCalibration(med);
   const substrateAdjusted = applySubstrateReference(cal);
   const lab = rgbToLab(substrateAdjusted);
   const cmyk = rgbToCmyk(substrateAdjusted[0], substrateAdjusted[1], substrateAdjusted[2]);
   const quality = Math.max(...std) > 8 ? 'Kararsız ölçüm' : 'Kararlı ölçüm';
-  const frameNote = `stabil kare ${stableCount}/${rawCount}`;
 
   lastMeasurement = {
     black_rgb_raw:blackRef, white_rgb_raw:whiteRef,
@@ -977,7 +921,7 @@ async function measureTarget(){
     target_rgb_calibrated:substrateAdjusted,
     target_rgb_before_substrate: cal,
     target_lab:lab, target_cmyk:cmyk,
-    stability_std_rgb:std, stable_frame_count:stableCount, raw_frame_count:rawCount, note:`${quality} • ${frameNote}`, created_at:new Date().toISOString()
+    stability_std_rgb:std, note:quality, created_at:new Date().toISOString()
   };
 
   $('labL').textContent = lab[0].toFixed(2);
@@ -986,7 +930,7 @@ async function measureTarget(){
   $('resultCmyk').textContent = cmyk.join(' / ');
   $('qualityPill').textContent = quality;
   $('resultSwatch').style.background = `rgb(${Math.round(substrateAdjusted[0])},${Math.round(substrateAdjusted[1])},${Math.round(substrateAdjusted[2])})`;
-  $('resultNote').textContent = `${quality} • ${frameNote} • σ=${Math.max(...std).toFixed(1)} • Aktif zemin: ${substrateLabel(activeSubstrate)}`;
+  $('resultNote').textContent = `${quality} • σ=${Math.max(...std).toFixed(1)} • Aktif zemin: ${substrateLabel(activeSubstrate)}`;
   updateNearestPantoneForMeasurement();
   $('saveBtn').disabled = false;
   $('exportBtn').disabled = false;
@@ -1400,12 +1344,20 @@ async function handleAuthPrimary(){
     console.error(err);
   }
 }
+function isMobileBrowser(){
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+}
+
 function unlockApp(statusMsg){
   appUnlocked = true;
   $('authOverlay').style.display = 'none';
   document.body.classList.remove('app-locked');
-  setStatus(statusMsg || 'Yazılım açıldı.');
-  robustStartCamera();
+  if(isMobileBrowser()){
+    setStatus(statusMsg || 'Yazılım açıldı. Telefonda kamera izni için Kameradan Çek butonuna bas.');
+  }else{
+    setStatus(statusMsg || 'Yazılım açıldı.');
+    robustStartCamera();
+  }
 }
 function initPasswordGate(){
   setAuthMode(localStorage.getItem(APP_PASSWORD_HASH_KEY) ? 'login' : 'setup');
@@ -1491,8 +1443,10 @@ $('galleryInput').addEventListener('change', e => { const f=e.target.files&&e.ta
 $('captureInput').addEventListener('change', e => { const f=e.target.files&&e.target.files[0]; useImageFile(f); e.target.value=''; });
 $('blackBtn').addEventListener('click', ()=>captureRef('black'));
 $('whiteBtn').addEventListener('click', ()=>captureRef('white'));
-$('substrateAutoBtn').addEventListener('click', ()=>captureRef('substrateAuto'));
-
+$('substrateWhiteBtn').addEventListener('click', ()=>captureRef('substrateWhite'));
+$('substrateKraftBtn').addEventListener('click', ()=>captureRef('substrateKraft'));
+$('useWhiteSubstrateBtn').addEventListener('click', ()=>{ activeSubstrate = 'white'; pulseButton('useWhiteSubstrateBtn'); updateSubstrateUI(); setStatus('Aktif zemin beyaz olarak seçildi.'); });
+$('useKraftSubstrateBtn').addEventListener('click', ()=>{ activeSubstrate = 'kraft'; pulseButton('useKraftSubstrateBtn'); updateSubstrateUI(); setStatus('Aktif zemin kraft olarak seçildi.'); });
 $('measureBtn').addEventListener('click', measureTarget);
 $('resetBtn').addEventListener('click', resetAll);
 $('saveBtn').addEventListener('click', saveMeasurement);
